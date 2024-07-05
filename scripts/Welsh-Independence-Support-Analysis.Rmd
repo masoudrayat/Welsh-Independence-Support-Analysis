@@ -1,0 +1,468 @@
+---
+title: 'Assessment Template: Statistical Inference'
+author: "Masoud Rayat Zadeh"
+date: ' Apr 17th 2024'
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# do not change these options
+knitr::opts_chunk$set(echo = TRUE) # do not edit this line.
+knitr::opts_chunk$set(error = TRUE,comment=NA) # do not edit this line.
+```
+
+# Instructions to students
+
+Save this template as your studentID.Rmd; you will upload this file as part of your submission. Change the author information on line 3 of this file to your **student ID**. Do not change the authorship to your name.
+
+You should knit this file to a document **Word** format. The Word document is what will be marked!
+
+Any changes that you make to the data (e.g. variable name changes) should be made entirely within R.
+
+The subsections labelled **Answer:** indicate where you should put in your written Answers. The template also provides blank code chunks for you to complete your Answers; you may choose to add additional chunks if required.
+
+This is an individual assessment: do not work with any other person during this exam. Text-matching software will be used on all submissions. 
+
+# Instructions for submission 
+You must submit your assignment before the stated deadline by electronic submission through Blackboard.
+
+- It is a good idea to save your work early and frequently to ensure you have no issues with the submission portal. Multiple submissions can be made to the portal, but only the final one will be marked.
+
+- It is your responsibility to submit the exam in a format stipulated above. Your marks may be affected if your tutor cannot open or properly view your submission.
+
+- Do not leave submission to the very last minute. Always allow time in case of technical issues.
+
+- The date and time of your submission is taken from the Blackboard server and is recorded when your submission is complete, not when you click Submit.
+
+- It is essential that you check that you have submitted the correct file, and that each complete file was received. Submission receipts are accessed from the Coursework tab.
+
+There is no late submission permitted on this timed assessment. Ensure that you submit in good time. Neither the module leader nor module team can accept late assessments, do not ask them to do so.
+
+
+
+# Background to the research
+
+Wales is part of the United Kingdom. There has been a growing number of supporters in recent years for the idea that Wales leaves the United Kingdom and becomes an independent country.
+
+The client is the Welsh Government who are interested in what impacts current residents' likelihood of supporting Welsh Independence.
+
+Data has been obtained from a survey of residents, where respondents were asked a series of questions about themselves, and also to take an assessment of their Welsh language reading, writing, speaking and listening abilities.
+
+
+
+# Data instructions
+
+Your individual data set is accessed via Blackboard >>> Assessments >>> Dewis Data For Exam.
+
+You must only analyse the specified data. No other data is to be used for this assessment.
+
+All data manipulation and analyses must be done within R.
+
+# Data structure
+
+The variables collected for a sample of residents are:
+
+resident - If respondent is 'Current' or 'Former' resident of Wales
+
+area - If respondent is/was resident of 'North' Wales or 'South' Wales
+
+support - Self-assessed level of support for Welsh independence, selected using a sliding scale (higher values mean stronger support for Welsh independence)
+
+friends - Estimated number of friends or family members who support Welsh Independence
+
+year - Year of birth
+
+gender - Gender
+
+read - Welsh language Reading ability score
+
+write - Welsh language Writing ability score
+
+speak - Welsh language Speaking ability score
+
+listen - Welsh language Listening ability score
+
+```{r libraries, include=FALSE}
+# load any required libraries / additional files here
+
+library(MASS)
+library(gapminder)
+library(scales)
+library(assertr)
+library(RSQLite)
+library(corrplot)
+library(performance)
+library(tableone)
+library(psych)
+library(flextable)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(boot)
+library(gridExtra)
+
+```
+
+# QUESTIONS START HERE
+
+# Question 1: Data Preparation 
+
+a) Ensure you have prepared your knitted Word document as per Instructions to Students
+
+b) You should load the data in R, describe and perform any actions with respect to:
+
+-any manipulation of the data structure
+
+-ensuring data is valid and that only views of **current** residents are explored in this research.
+
+**(7 marks)**
+
+### Answer:
+I loaded the dataset from the specified file path into a data frame named wales_survey_data. To achieve this, I used the read.csv function in R, which reads a file in CSV format and creates a data frame. To get an initial understanding of the dataset, I displayed the first few rows. This aids in confirming the correct loading of the data and offers a preview of the dataset's structure and contents. For this, I used the head function. I successfully loaded the dataset into the R environment and displayed its first few rows by executing the above commands. This crucial initial exploration step ensures the correct import of the data and enables a preliminary examination of its structure and contents.
+
+I made, cleaned, and filtered the dataset to prepare it for further analysis. Using the str function, I analyzed the dataset's structure to provide a detailed summary of the data frame. Missing and unknown values in the 'area' column were counted using the is.na function and "Unknown" values. The dataset was cleaned by removing rows with missing values, "Unknown", or "Missing" to ensure only valid entries were retained. I then filtered the cleaned dataset to include only current residents, ensuring the analysis focused on the relevant subset of the population. I inspected the resulting dataset to verify changes and understand its new composition. Finally, I used the summary function to generate a summary of the cleaned and filtered dataset, which provided a comprehensive overview of the dataset's statistics, including measures like mean, median, and range for numeric variables and counts for categorical variables.
+```{r data}
+# Load the dataset
+wales_survey_data <- read.csv("D:/welsh-independence-support-analysis/data/contents.csv")
+
+# Display the first few rows of the dataset
+head(wales_survey_data)
+
+```
+
+```{r Q1 }
+# Inspect the structure of the dataset
+str(wales_survey_data)
+
+# Count missing values
+missing_count <- sum(is.na(wales_survey_data$area))
+
+# Count unknown values
+unknown_count <- sum(wales_survey_data$area == "Unknown", na.rm = TRUE)
+
+# Remove rows with missing, unknown, or Missing values in the 'area' column
+cleaned_data <- wales_survey_data %>%
+  filter(!is.na(area) & area != "Unknown" & area != "Missing")
+
+# Filter to include only current residents
+current_residents <- cleaned_data %>% filter(resident == "Current")
+
+# Display the structure of the filtered dataset
+str(current_residents)
+
+# Summary of the cleaned dataset
+summary(current_residents)
+
+
+```
+
+
+# Question 2 
+
+A colleague suggests the following research question: 
+
+'Is there a difference between the support for Welsh independence in North Wales compared to South Wales?'
+
+Provide appropriate exploratory data analyses, and perform an appropriate hypothesis test to assess this research question.
+
+Marks are awarded for well-designed output, and the interpretation of the output.
+
+
+**(15 marks)**
+
+### Answer: 
+I analysed the distribution of support scores for Welsh independence in North and South Wales using exploratory data analysis. My hypothesis was to find a difference in the mean support for Welsh independence between the two regions. The results showed a significant difference between the mean support scores, with a 95% confidence interval of 0.87 to 1.24.
+
+The test statistic (t = 11.217) indicated a significant difference in sample means compared to the variation within the samples. The degrees of freedom (df = 404) were based on the two groups' sample sizes and reflected the amount of independent information available to estimate population parameters. A p-value less than 0.05 indicated strong evidence against the null hypothesis, suggesting that the observed difference in means is statistically significant.
+
+The confidence interval (0.8718379 to 1.2423670) indicated that the true difference in mean support scores between North and South Wales lies between 0.87 and 1.24, further supporting the rejection of the null hypothesis. The sample estimates showed that the average support score for Welsh independence was higher in North Wales (5.38) compared to South Wales (4.32).
+```{r Q2}
+# Exploratory Data Analysis
+# Visualize the distribution of support scores for North and South Wales
+ggplot(current_residents, aes(x = area, y = support, fill = area)) +
+  geom_boxplot() +
+  labs(title = "Support for Welsh Independence by Area",
+       x = "Area",
+       y = "Support for Welsh Independence") +
+  theme_minimal()
+
+# Calculate summary statistics for support scores in North and South Wales
+summary_stats <- current_residents %>%
+  group_by(area) %>%
+  summarise(
+    count = n(),
+    mean = mean(support, na.rm = TRUE),
+    median = median(support, na.rm = TRUE),
+    sd = sd(support, na.rm = TRUE)
+  )
+
+print(summary_stats)
+
+# Hypothesis Testing
+# Perform an independent two-sample t-test
+north_wales_support <- current_residents %>% filter(area == "North") %>% pull(support)
+south_wales_support <- current_residents %>% filter(area == "South") %>% pull(support)
+
+t_test_result <- t.test(north_wales_support, south_wales_support, var.equal = TRUE)
+
+print(t_test_result)
+
+
+```
+
+
+
+# Question 3
+
+Another colleague suggests the following research question:
+
+'Are there any relationships between support for Welsh independence and their proficiency with the Welsh language?'
+
+Assess this research question by showing and interpreting appropriate linear correlations.
+
+Marks are awarded for well-designed output, and the interpretation of the output.
+
+
+**(12 marks)**
+
+### Answer:
+The research question was to determine the relationships between support for Welsh independence and proficiency with the Welsh language. I calculated a correlation matrix to evaluate the relationships between these variables. I created a correlation plot to visualise the relationships.
+
+The results showed a strong positive correlation between support for Welsh independence and proficiency in listening to Welsh (correlation coefficient = 0.67). There was a moderately positive correlation between support for Welsh independence and proficiency in writing Welsh (correlation coefficient = 0.63). There was a weak positive correlation between support for Welsh independence and proficiency in reading Welsh (correlation coefficient = 0.17). I found a very weak positive correlation (relationship coefficient = 0.07) between support for Welsh independence and proficiency in speaking Welsh.
+
+Proficiency in reading and writing Welsh showed a moderately positive correlation (correlation coefficient = 0.59). Proficiency in writing and listening to Welsh showed a moderately positive correlation (correlation coefficient = 0.66). Other language proficiencies showed weaker correlations with each other.
+
+The analysis revealed that support for Welsh independence is most strongly associated with proficiency in listening to and writing Welsh, suggesting that individuals who are better at listening to and writing in Welsh are more likely to support Welsh independence. The weak correlations between reading and speaking suggest that these proficiencies are less influential on political support for independence.
+
+```{r Q3}
+
+# Calculate the correlation matrix
+cor_matrix <- cor(current_residents[, c("support", "read", "write", "speak", "listen")], use = "complete.obs")
+
+# Print the correlation matrix
+print(cor_matrix)
+
+# Create a correlation plot to visualize the relationships
+corrplot(cor_matrix, method = "number", type = "upper", tl.col = "black", tl.srt = 45)
+
+```
+
+
+# Question 4
+
+A further research question states: 
+
+'Can the support for Welsh independence be predicted by proficiency for the Welsh language?'
+
+Produce simple linear regression with **ONE** appropriate explanatory variable. 
+
+Your answer should include:
+
+- justification for the choice of explanatory variable, including any additional supporting exploratory data analyses used to make the choice;
+
+- interpretation of the slope (gradient) coefficient;
+
+- comment on the r-square value, and the validity of model assumptions.
+
+
+**(23 marks)**
+
+### Answer:
+I aimed to investigate the relationship between speaking ability and support for Welsh independence among current residents. To achieve this, I employed a simple linear regression model, using speaking ability as the explanatory variable and support for Welsh independence as the response variable. The dataset consisted of two key variables: "Speak," a measure of speaking ability obtained from a standardized test, and "Support," a score indicating support for Welsh independence measured on a scale from 0 to 10.
+
+I fitted the linear regression model using the formula: support ~ speak. This allowed me to examine the relationship between speaking ability and support for Welsh independence. To verify the validity of the model assumptions, I produced several diagnostic plots. The Residuals vs. Fitted plot was used to check the linearity assumption, where the residuals appeared randomly scattered around the horizontal line, indicating that the linearity assumption was reasonable. The Q-Q Plot was used to assess the normality of residuals, showing that the residuals followed the 45-degree line fairly well, suggesting they were approximately normally distributed. The Scale-Location Plot evaluated homoscedasticity, indicating that the residual spread was relatively constant. The Residuals vs. Leverage plot was used to detect influential data points, showing no highly influential data points, suggesting that the model was not unduly influenced by any single observation.
+
+The regression output is summarized as follows: the intercept was 4.44779 (Standard Error: 0.31276, p-value: < 2e-16), and the "Speak" coefficient was 0.01312 (Standard Error: 0.00949, p-value: 0.167). The residuals had a minimum of -2.6515, a 1st quartile of -0.8035, a median of 0.0082, a 3rd quartile of 0.7663, and a maximum of 3.4148. The model statistics showed a residual standard error of 1.084, a multiple R-squared of 0.004711, an adjusted R-squared of 0.002248, and an F-statistic of 1.912 (p-value: 0.1675).
+
+The coefficient for the "Speak" variable is positive (0.01312), suggesting a slight increase in support for Welsh independence with better speaking ability. However, this effect is not statistically significant (p-value: 0.167). The R-squared value is very low (0.004711), indicating that speaking ability explains less than 1% of the variance in support for Welsh independence.
+
+I conclude that speaking ability alone is not a strong predictor of support for Welsh independence. The low R-squared value suggests that other factors might be more important in predicting support for independence.
+
+
+```{r Q4}
+# Choose the explanatory variable with the highest correlation with 'support'
+explanatory_variable <- "speak"
+
+# Perform simple linear regression
+model <- lm(support ~ speak, data = current_residents)
+
+# Print the summary of the regression model
+summary(model)
+
+# Plot the regression line
+ggplot(current_residents, aes(x = speak, y = support)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Support for Welsh Independence vs Speaking Ability",
+       x = "Speaking Ability",
+       y = "Support for Welsh Independence") +
+  theme_minimal()
+
+# Additional diagnostics plots for checking model assumptions
+par(mfrow = c(2, 2))
+plot(model)
+
+
+```
+
+
+
+
+# Question 5:  Report
+
+
+Clearly state **an appropriate research question** and statistical analyses plan based on the objective of the client and the data set supplied to you.
+
+You are required to write a short report for the Welsh Government.
+
+Your answer to this question must be a report based on implementation of your statistical analyses plan, **not** a repeat or summary of your answers to the questions above.
+
+In your report you may wish to include a number of the following: exploratory data analyses; a hypothesis test; data modelling; discussion of limitations; how you could extend the research if given more time.
+
+This report should contain at most 5 outputs (i.e. graphics + tables) and at most 500 words.
+
+
+
+**(35 marks)**
+
+### Answer:
+The dataset I analysed includes measures of reading, writing, speaking, and listening abilities, year of birth, gender, number of friends, and support for Welsh independence for a sample of individuals. The exploratory plots revealed the distribution and relationships between these variables. Key observations from these plots indicate that reading and writing abilities show little variation with the year of birth, as demonstrated by the flat trend lines. Speaking ability indicates a weak positive relationship between support for Welsh independence and the number of friends. In contrast, listening ability shows a stronger positive relationship with support for Welsh independence, while the number of friends and gender appear to have minimal impact.
+
+For the statistical analysis, I conducted linear regression analyses to examine the effect of the year of birth on reading and writing abilities. The regression analysis for reading ability indicated no significant effect of the year of birth (p = 0.890), and the model explained a negligible amount of variance (R² < 0.001). However, the analysis for writing ability revealed a statistically significant positive effect of the year of birth (p = 0.018), though the explained variance was very small (R² = 0.014), indicating a weak relationship.
+
+I also performed a multiple regression analysis to evaluate the impact of support for Welsh independence and the number of friends on speaking ability. The results showed that neither support for Welsh independence (p = 0.168) nor the number of friends (p = 0.094) had a significant impact on speaking ability, although the number of friends was marginally significant. This model explained only a small portion of the variance (R2 = 0.012).
+
+Next, I conducted a multiple regression analysis to assess the effects of support for Welsh independence, the number of friends, and gender on listening ability. The analysis revealed that support for Welsh independence has a strong positive effect on listening ability (p < 0.001), while the number of friends and gender did not have significant effects. This model explained a substantial portion of the variance (R2 = 0.451).
+
+Then, I conducted a bootstrap analysis of speaking ability to assess the coefficient's variability for the year of birth. The results indicated a distribution centred around a slightly negative coefficient, suggesting no strong evidence of a relationship. Additionally, I conducted a regression analysis using log-transformed listening ability to normalise the distribution. This analysis showed a small but significant positive effect of the year of birth on listening ability (p = 0.044), though the explained variance was minimal (R² = 0.010).
+
+The analysis shows that the year of birth does not strongly influence most linguistic abilities, except for a slight increase in writing and listening abilities over time. Support for Welsh independence is a significant predictor of listening ability, but does not significantly impact speaking ability. The number of friends and gender do not appear to have substantial effects on linguistic abilities.
+
+However, there are several limitations to this analysis. The sample size and demographic distribution may limit the generalizability of the results. The dataset lacks information on other potential confounding variables, such as educational background and socioeconomic status. Additionally, self-reported measures of abilities and support for independence may introduce biases.
+
+Generally, this analysis provides insights into the factors affecting Welsh residents' linguistic abilities. While the year of birth and support for Welsh independence have some impact on certain abilities, the overall effects are relatively modest. The findings can inform educational policies and initiatives aimed at enhancing linguistic proficiency in the context of Welsh independence.
+
+
+```{r Q5}
+
+# Linear regression for reading score
+model1 <- lm(read ~ year, data = current_residents)
+summary(model1)
+
+# Visualization for Linear regression model1
+plot1 <- ggplot(current_residents, aes(x = year, y = read)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Reading Ability vs Year of Birth",
+       x = "Year of Birth",
+       y = "Reading Ability") +
+  theme_minimal()
+
+# Linear regression for writing score
+model2 <- lm(write ~ year, data = current_residents)
+summary(model2)
+
+# Visualization for Linear regression model2
+plot2 <- ggplot(current_residents, aes(x = year, y = write)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Writing Ability vs Year of Birth",
+       x = "Year of Birth",
+       y = "Writing Ability") +
+  theme_minimal()
+
+# Multiple regression for speaking score
+model3 <- lm(speak ~ support + friends, data = current_residents)
+summary(model3)
+
+# Visualization for Multiple regression model3
+plot3 <- ggplot(current_residents, aes(x = support, y = speak, color = friends)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Speaking Ability vs Support and Friends",
+       x = "Support for Welsh Independence",
+       y = "Speaking Ability") +
+  theme_minimal()
+
+# Multiple regression for listening score
+model4 <- lm(listen ~ support + friends + gender, data = current_residents)
+summary(model4)
+
+# Visualization for Multiple regression model4
+plot4 <- ggplot(current_residents, aes(x = support, y = listen, color = friends, shape = gender)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Listening Ability vs Support, Friends, and Gender",
+       x = "Support for Welsh Independence",
+       y = "Listening Ability") +
+  theme_minimal()
+
+# Combine the regression plots into a single output
+grid.arrange(plot1, plot2, plot3, plot4, ncol = 2)
+
+# Bootstrap for speaking score coefficient
+bootstrap_speak <- function(data, indices) {
+  d <- data[indices,]
+  fit <- lm(speak ~ year, data = d)
+  return(coef(fit)[2])
+}
+results <- boot(data = current_residents, statistic = bootstrap_speak, R = 1000)
+print(results)
+
+# Visualization for Bootstrap results
+boot_coef <- boot.ci(results, type = "bca")
+hist(results$t, breaks = 30, main = "Bootstrap Distribution of Speaking Ability Coefficient", xlab = "Coefficient for Year", col = "lightblue")
+abline(v = boot_coef$bca[4:5], col = "red", lwd = 2)
+
+# Logarithmic model for listening score
+current_residents$log_listen <- log(current_residents$listen)
+model7 <- lm(log_listen ~ year, data = current_residents)
+summary(model7)
+
+# Visualization for Logarithmic model and Support for Speaking Ability
+plot5 <- ggplot(current_residents, aes(x = year, y = log_listen)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Log-Transformed Listening Ability vs Year of Birth",
+       x = "Year of Birth",
+       y = "Log-Transformed Listening Ability") +
+  theme_minimal()
+
+plot6 <- ggplot(current_residents, aes(x = speak, y = support)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Support for Welsh Independence vs Speaking Ability",
+       x = "Speaking Ability",
+       y = "Support for Welsh Independence") +
+  theme_minimal()
+
+# Combine the Logarithmic model and Speaking Ability plots into a single output
+grid.arrange(plot5, plot6, ncol = 2)
+
+
+```
+
+
+
+# Question 6
+
+Describe how you have applied principles of reproducible research in this submission (maximum 100 words).
+
+Marks are awarded for identification of appropriate reproducible research principles, only if also evidenced throughout your submission that they have been applied.
+
+ 
+**(8 marks)**
+
+### Answer:
+
+The principles of reproducible research emphasis transparency and clarity in data analysis. Transparent data handling, detailed hypotheses, and clear documentation guarantee the replication of results. Comprehensive code with comments and consistent library usage facilitate code replication. Visualizations and exploratory data analysis provide intuitive insights. In addition to the code, I provide summary statistics and analytical results. Reproducible statistical tests and models ensure verifiable results. These principles ensure transparency in research, enabling others to replicate the results using the provided code and explanations.
+
+# End matter - Session Information
+
+Do not edit this part. Make sure that you compile your document so that the information about your session (including software / package versions) is included in your submission.
+
+```{r}
+sessionInfo()
+```
