@@ -9,12 +9,12 @@ This project aims to analyse survey data from Welsh residents to identify key fa
 
 ## Table of Contents
 - [Data Preparation and Cleaning](#data-preparation-and-cleaning)
-- [Exploratory Data Analysis] (#Exploratory-data-analysis)
+- [Exploratory Data Analysis](#exploratory-data-analysis)
 - [Statistical Analysis](#statistical-analysis)
 - [Predictive Modelling](#predictive-modelling)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
-- [Run the Analysis] (#run-the-analysis)
+- [Run the Analysis](#run-the-analysis)
 
 ## Data Preparation and Cleaning
 - Loaded and cleaned the dataset to ensure it only included current residents of Wales.
