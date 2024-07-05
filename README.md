@@ -32,8 +32,6 @@ This project aims to analyse survey data from Welsh residents to identify key fa
 - Developed simple linear regression models to predict support for Welsh independence based on Welsh language proficiency.
 - Analysed the impact of language proficiency on support levels, revealing that listening and writing abilities are strong predictors.
 
-The project provided valuable insights into the demographic and linguistic factors influencing support for Welsh independence.
-
 ## Project Structure
 
 The project is organized into the following directories and files:
