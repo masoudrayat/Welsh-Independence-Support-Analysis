@@ -52,4 +52,3 @@ The project is organized into the following directories and files:
 
 Knit the `Welsh_Independence_Support_Analysis.Rmd` file in RStudio to generate the report. This will execute all code chunks and produce results and visualisations.
 
-This setup ensures a structured approach to analysing support for Welsh independence, allowing for reproducibility and ease of understanding for future reference.
