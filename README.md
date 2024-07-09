@@ -7,6 +7,7 @@
 
 This academic project aimed to analyse survey data from Welsh residents to identify key factors influencing their support for Welsh independence, with a focus on demographic characteristics and Welsh language proficiency. The project is implemented using the R programming language.
 
+
 ## Table of Contents
 - [Data Preparation and Cleaning](#data-preparation-and-cleaning)
 - [Exploratory Data Analysis](#exploratory-data-analysis)
